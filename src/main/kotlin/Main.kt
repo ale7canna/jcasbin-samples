@@ -1,7 +1,9 @@
 
+import models.CustomSubject
 import org.casbin.jcasbin.main.CoreEnforcer.newModel
 import org.casbin.jcasbin.main.Enforcer
 import org.casbin.jcasbin.persist.file_adapter.FileAdapter
+import kotlin.system.measureTimeMillis
 
 
 fun main(args: Array<String>) {
@@ -16,12 +18,24 @@ fun main(args: Array<String>) {
     val model = newModel(modelText)
     val adapter = FileAdapter(adapterStream)
 
-    val enforcer = Enforcer(model, adapter)
+    val enforcer = Enforcer(model, adapter, true)
 
-    val sub = "alice" // the user that wants to access a resource.
-    val domain = "domain1"
-    val obj = "data1" // the resource that is going to be accessed.
-    val act = "read" // the operation that the user performs on the resource.
+    val names = listOf("ale", "alice", "bob")
+    val actions = listOf("read", "write")
+    val objects = listOf("course1", "course2", "data1", "data2", "course", "exam", "exam1", "exam2", "content")
+    val domains = listOf("domain1", "domain2")
+    val nPolicies = 100
+    val timeInMillis = measureTimeMillis {
+        for (k in 0..nPolicies) {
+            val name = names.shuffled().first()
+            val domain = domains.shuffled().first()
+            val obj = objects.shuffled().first()
+            val act = actions.shuffled().first()
+            val isAdmin = listOf(true, false).shuffled().first()
 
-    println(enforcer.enforce(sub, domain, obj, act))
+            val sub = CustomSubject(name=name, isAdmin=isAdmin) // the user that wants to access a resource.
+            println(enforcer.enforce(sub, domain, obj, act))
+        }
+    }
+    println("Evaluation of ${nPolicies} policies took ${timeInMillis} ms")
 }
