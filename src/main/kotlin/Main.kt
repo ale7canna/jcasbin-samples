@@ -1,8 +1,7 @@
-
 import models.CustomSubject
+import org.casbin.adapter.JDBCAdapter
 import org.casbin.jcasbin.main.CoreEnforcer.newModel
 import org.casbin.jcasbin.main.Enforcer
-import org.casbin.jcasbin.persist.file_adapter.FileAdapter
 import kotlin.system.measureTimeMillis
 
 
@@ -13,12 +12,46 @@ fun main(args: Array<String>) {
     // Learn more about running applications: https://www.jetbrains.com/help/idea/running-applications.html.
     println("Program arguments: ${args.joinToString()}")
 
+    val dbDriver = "org.postgresql.Driver"
+    val dbUrl = "jdbc:postgresql://localhost:6543/jcasbin-sample"
+    val dbUsername = "postgres"
+    val dbPassword = "postgres"
+
     val modelText = {}.javaClass.getResource("model.conf")?.readText()
-    val adapterStream = {}.javaClass.getResource("policy.csv")?.openStream()
     val model = newModel(modelText)
-    val adapter = FileAdapter(adapterStream)
+    val adapter = JDBCAdapter(dbDriver, dbUrl, dbUsername, dbPassword);
 
     val enforcer = Enforcer(model, adapter, true)
+    enforcer.addNamedGroupingPolicies(
+        "g", listOf(
+            listOf("alice", "admin", "domain1"),
+            listOf("bob", "admin", "domain2"),
+            listOf("ale", "admin", "domain1"),
+        )
+    )
+    enforcer.addNamedGroupingPolicies(
+        "g2", listOf(
+            listOf("content", "root"),
+            listOf("course", "content"),
+            listOf("exam", "content"),
+            listOf("course1", "course"),
+            listOf("course2", "course"),
+            listOf("exam1", "exam"),
+            listOf("exam2", "exam")
+        )
+    )
+    enforcer.addPolicies(
+        listOf(
+            listOf("admin", "*", "data1", "read"),
+            listOf("admin", "*", "data1", "write"),
+            listOf("admin", "domain2", "data2", "read"),
+            listOf("admin", "domain2", "data2", "write"),
+            listOf("admin", "*", "content", "*"),
+        )
+    )
+    enforcer.savePolicy()
+
+    println("Enforce correctly set up!")
 
     val names = listOf("ale", "alice", "bob")
     val actions = listOf("read", "write")
@@ -33,7 +66,7 @@ fun main(args: Array<String>) {
             val act = actions.shuffled().first()
             val isAdmin = listOf(true, false).shuffled().first()
 
-            val sub = CustomSubject(name=name, isAdmin=isAdmin) // the user that wants to access a resource.
+            val sub = CustomSubject(name = name, isAdmin = isAdmin) // the user that wants to access a resource.
             println(enforcer.enforce(sub, domain, obj, act))
         }
     }

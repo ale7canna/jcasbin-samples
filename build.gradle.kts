@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
     implementation("org.casbin:jcasbin:1.24.2")
+    implementation("org.casbin:jdbc-adapter:2.3.1")
     testImplementation(kotlin("test"))
 }
 
