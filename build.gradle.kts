@@ -29,3 +29,17 @@ tasks.withType<KotlinCompile> {
 application {
     mainClass.set("MainKt")
 }
+
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "MainKt"
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    configurations.compileClasspath.get()
+        .forEach {
+            from(if (it.isDirectory) it else zipTree(it))
+                .exclude("META-INF/**")
+                .exclude("META-INF/*.DSA")
+                .exclude("META-INF/*.RSA")
+        }
+}

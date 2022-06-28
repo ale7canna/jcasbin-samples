@@ -1,3 +1,3 @@
 
-rootProject.name = "jcasbin-tutorial"
+rootProject.name = "jcasbin-sample"
 

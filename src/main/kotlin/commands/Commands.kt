@@ -34,6 +34,7 @@ fun dbSetup(args: List<String>) {
         )
     )
     enforcer.savePolicy()
+    println("db setup completed")
 }
 
 fun benchmark(args: List<String>) {
@@ -71,5 +72,5 @@ fun checkPolicy(args: List<String>) {
     val obj = args[2]
     val action = args[3]
     val sub = CustomSubject(name = subject, isAdmin = false) // the user that wants to access a resource.
-    println(enforcer.enforce(sub, domain, obj, action))
+    println("Checking policy $args. Result: ${enforcer.enforce(sub, domain, obj, action)}")
 }
