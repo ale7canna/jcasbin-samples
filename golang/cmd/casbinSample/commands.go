@@ -33,6 +33,19 @@ func (m CommandsManager) SetupDB() *cobra.Command {
 	return cmd
 }
 
+func (m CommandsManager) CheckPolicy() *cobra.Command {
+	run := func(cmd *cobra.Command, args []string) error {
+		m.checkPolicy(args)
+		return nil
+	}
+
+	cmd := &cobra.Command{
+		Use:  "check-policy",
+		RunE: run,
+	}
+	return cmd
+}
+
 func (m CommandsManager) setupDB() {
 	enforcer, _ := m.getEnforcer()
 
@@ -65,6 +78,22 @@ func (m CommandsManager) setupDB() {
 	_ = enforcer.SavePolicy()
 }
 
+func (m CommandsManager) checkPolicy(policy []string) {
+	enforcer, _ := m.getEnforcer()
+
+	subject := policy[0]
+	domain := policy[1]
+	obj := policy[2]
+	action := policy[3]
+	sub := CustomSubject{Name: subject, IsAdmin: true} // the user that wants to access a resource.
+	result, err := enforcer.Enforce(sub, domain, obj, action)
+	if err != nil {
+		log.WithError(err).Fatal("Error")
+	}
+	log.WithField("policy", policy).WithField("result", result).
+		Info("Checking policy {policy}. Result: {result}")
+}
+
 func (m CommandsManager) getEnforcer() (*casbin.SyncedEnforcer, error) {
 	modelTest := "[request_definition]\n" +
 		"r = sub, dom, obj, act\n" +
@@ -76,7 +105,7 @@ func (m CommandsManager) getEnforcer() (*casbin.SyncedEnforcer, error) {
 		"[policy_effect]\n" +
 		"e = some(where (p.eft == allow))\n" +
 		"[matchers]\n" +
-		"m = r.sub.isAdmin == true || (g(r.sub.name, p.sub, r.dom) && g2(r.obj, p.obj) && keyMatch(r.dom, p.dom) && keyMatch(r.act, p.act))"
+		"m = r.sub.IsAdmin == true || (g(r.sub.Name, p.sub, r.dom) && g2(r.obj, p.obj) && keyMatch(r.dom, p.dom) && keyMatch(r.act, p.act))"
 	model, err := model2.NewModelFromString(modelTest)
 	if err != nil {
 		log.WithError(err).Fatal("Fatal error")

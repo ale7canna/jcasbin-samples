@@ -19,6 +19,7 @@ func main() {
 
 	commandsManager := commands.NewManager()
 	rootCmd.AddCommand(commandsManager.SetupDB())
+	rootCmd.AddCommand(commandsManager.CheckPolicy())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
