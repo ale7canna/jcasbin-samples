@@ -1,10 +1,12 @@
 import commands.benchmark
 import commands.checkPolicy
 import commands.dbSetup
+import commands.dbSetupLarge
 
 
 val commands = hashMapOf<String, (List<String>) -> Unit>(
     "db-setup" to ::dbSetup,
+    "db-setup-large" to ::dbSetupLarge,
     "benchmark" to ::benchmark,
     "check" to ::checkPolicy,
 )
