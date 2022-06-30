@@ -1,20 +1,44 @@
+x-base-services:
+  x-base-casbin-run: &x-base-casbin-run
+    build:
+      context: .
+    environment: &x-base-env
+      DB_PORT: 5432
+      DB_HOST: postgres-db
+      MONGO_DB_PORT: 27017
+      MONGO_DB_HOST: mongo-db
+    command: bash -c "java -jar run.jar db-setup-large && java -jar run.jar benchmark && java -jar run.jar check ale domain1 course1 read && java -jar run.jar check ale domain1 data2 write"
+
 services:
   postgres-db:
     image: postgres:13
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: db-user
+      POSTGRES_PASSWORD: db-password
       POSTGRES_DB: jcasbin-sample
     ports:
       - 6543:5432
 
-  casbin-run:
-    image: jcasbin-sample
-    build:
-      context: .
+  mongo-db:
+    image: mongo:latest
     environment:
-      DB_PORT: 5432
-      DB_HOST: postgres-db
-    command: bash -c "java -jar run.jar db-setup && java -jar run.jar benchmark && java -jar run.jar check ale domain1 course1 read && java -jar run.jar check ale domain1 data2 write"
+      MONGO_INITDB_ROOT_USERNAME: db-user
+      MONGO_INITDB_ROOT_PASSWORD: db-password
+    ports:
+      - 27017:27017
+
+  casbin-run-mongo:
+    <<: *x-base-casbin-run
+    environment:
+      <<: *x-base-env
+      DB_TYPE: mongo
+    depends_on:
+      - mongo-db
+
+  casbin-run-postgres:
+    <<: *x-base-casbin-run
+    environment:
+      <<: *x-base-env
+      DB_TYPE: postgres
     depends_on:
       - postgres-db

@@ -10,11 +10,16 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://jitpack.io")
+    }
 }
 
 dependencies {
     implementation("org.casbin:jcasbin:1.24.2")
     implementation("org.casbin:jdbc-adapter:2.3.1")
+    implementation("com.github.zzl221000:jcasbin-mongo-adapter:v1.0")
+    implementation("org.mongodb:mongodb-driver-sync:4.6.1")
     testImplementation(kotlin("test"))
 }
 
