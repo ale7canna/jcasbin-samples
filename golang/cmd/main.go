@@ -18,7 +18,7 @@ func main() {
 	}
 
 	commandsManager := commands.NewManager()
-	rootCmd.AddCommand(commandsManager.FakeCommand())
+	rootCmd.AddCommand(commandsManager.SetupDB())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
