@@ -10,7 +10,10 @@ import (
 	"github.com/spf13/cobra"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"math/rand"
 	"os"
+	"strconv"
+	"time"
 )
 
 type CommandsManager struct {
@@ -41,6 +44,19 @@ func (m CommandsManager) CheckPolicy() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:  "check-policy",
+		RunE: run,
+	}
+	return cmd
+}
+
+func (m CommandsManager) Benchmark() *cobra.Command {
+	run := func(cmd *cobra.Command, args []string) error {
+		m.benchmark(args)
+		return nil
+	}
+
+	cmd := &cobra.Command{
+		Use:  "benchmark",
 		RunE: run,
 	}
 	return cmd
@@ -94,7 +110,41 @@ func (m CommandsManager) checkPolicy(policy []string) {
 		Info("Checking policy {policy}. Result: {result}")
 }
 
-func (m CommandsManager) getEnforcer() (*casbin.SyncedEnforcer, error) {
+func (m CommandsManager) benchmark(args []string) {
+	start := time.Now().UnixMilli()
+	enforcer, _ := m.getEnforcer()
+	log.WithField("timeSpent", time.Now().UnixMilli()-start).Info("enforcer init took {timeSpent}")
+
+	names := []string{"ale", "alice", "bob"}
+	actions := []string{"read", "write"}
+	objects := []string{"course1", "course2", "data1", "data2", "course", "exam", "exam1", "exam2", "content"}
+	domains := []string{"domain1", "domain2"}
+	nPolicies := 100
+	if len(args) > 0 {
+		nPolicies, _ = strconv.Atoi(args[0])
+	}
+
+	start = time.Now().UnixMilli()
+	rand.Seed(time.Now().UnixNano())
+	for i := 1; i <= nPolicies; i++ {
+		name := randomItem(names)
+		domain := randomItem(domains)
+		obj := randomItem(objects)
+		act := randomItem(actions)
+		isAdmin := false
+		sub := CustomSubject{Name: name, IsAdmin: isAdmin}
+
+		_, err := enforcer.Enforce(sub, domain, obj, act)
+		if err != nil {
+			log.WithError(err).Fatal("Error")
+		}
+	}
+	log.WithField("nPolicies", nPolicies).
+		WithField("timeSpent", time.Now().UnixMilli()-start).
+		Info("Computing {nPolicies} policies took {timeSpent} ms")
+}
+
+func (m CommandsManager) getEnforcer() (*casbin.Enforcer, error) {
 	modelTest := "[request_definition]\n" +
 		"r = sub, dom, obj, act\n" +
 		"[policy_definition]\n" +
@@ -116,7 +166,7 @@ func (m CommandsManager) getEnforcer() (*casbin.SyncedEnforcer, error) {
 		log.WithError(err).Fatal("Fatal error")
 	}
 
-	enforcer, err := casbin.NewSyncedEnforcer(model, a)
+	enforcer, err := casbin.NewEnforcer(model, a)
 	if err != nil {
 		log.WithError(err).Fatal("Fatal error")
 	}
@@ -145,4 +195,8 @@ func envOrDefault(name string, def string) string {
 		val = def
 	}
 	return val
+}
+
+func randomItem(items []string) string {
+	return items[rand.Intn(len(items))]
 }
