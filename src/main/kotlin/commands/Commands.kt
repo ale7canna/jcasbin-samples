@@ -102,7 +102,8 @@ fun benchmark(args: List<String>) {
             val isAdmin = listOf(true, false).shuffled().first()
 
             val sub = CustomSubject(name = name, isAdmin = isAdmin) // the user that wants to access a resource.
-            println(enforcer.enforce(sub, domain, obj, act))
+            val result = enforcer.enforce(sub, domain, obj, act)
+//            println(result)
         }
     }
     println("Evaluation of $nPolicies policies took $timeInMillis ms")

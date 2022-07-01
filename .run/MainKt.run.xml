@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="MainKt" type="JetRunConfigurationType" nameIsGenerated="true">
     <envs>
-      <env name="DB_TYPE" value="mongo" />
+      <env name="DB_TYPE" value="postgres" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="MainKt" />
     <module name="jcasbin-sample.main" />

@@ -19,7 +19,7 @@ fun getEnforcer(): Enforcer {
 
 private fun getAdapter(): Adapter {
     val adapterType = System.getenv("DB_TYPE")?.lowercase() ?: "postgres"
-    if (adapterType == "postres")
+    if (adapterType == "postgres")
         return getPostgresAdapter()
     return getMongoAdapter()
 }
