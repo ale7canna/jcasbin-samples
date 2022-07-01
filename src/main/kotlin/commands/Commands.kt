@@ -43,6 +43,8 @@ fun dbSetupLarge(args: List<String>) {
     val names = getNames()
     val roles = getRoles()
     val domains = getDomains()
+    val pattern = """(?i)\d""".toRegex()
+    val resources = getResources().map {listOf(it, it.take(pattern.find(it)?.range?.first ?: it.length))}
     val userRoles =
         generateSequence {
             listOf(
@@ -56,7 +58,7 @@ fun dbSetupLarge(args: List<String>) {
         val t = types.shuffled().first()
         listOf(t + UUID.randomUUID(), t)
     }
-    val resources = generateSequence { genType() }.take(10000).toList()
+    val randomResources = generateSequence { genType() }.take(10000).toList()
     val resourceRoles = listOf(
         listOf("content", "root"),
         listOf("course", "content"),
@@ -71,12 +73,12 @@ fun dbSetupLarge(args: List<String>) {
             resources.shuffled().first()[0],
             actions.shuffled().first()
         )
-    }.take(100000).toList()
+    }.take(10000).toList()
     enforcer.addNamedGroupingPolicies(
         "g", userRoles
     )
     enforcer.addNamedGroupingPolicies(
-        "g2", resourceRoles + resources
+        "g2", resourceRoles + resources + randomResources
     )
     enforcer.addPolicies(policies)
     enforcer.savePolicy()
@@ -88,9 +90,9 @@ fun benchmark(args: List<String>) {
     val enforcer = getEnforcer()
     println("enforcer init took ${System.currentTimeMillis() - start} ms")
 
-    val names = listOf("ale", "alice", "bob")
-    val actions = listOf("read", "write")
-    val objects = listOf("course1", "course2", "data1", "data2", "course", "exam", "exam1", "exam2", "content")
+    val names = getNames()
+    val actions = listOf("read", "edit", "consume", "share")
+    val objects = getResources()
     val domains = listOf("domain1", "domain2")
     val nPolicies = if (args.size == 1) args[0].toInt() else 100
     val timeInMillis = measureTimeMillis {

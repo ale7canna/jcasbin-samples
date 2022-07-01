@@ -14,7 +14,9 @@ fun getEnforcer(): Enforcer {
 
     val modelText = object {}.javaClass.getResource("/model.conf")?.readText()
     val model = newModel(modelText)
-    return Enforcer(model, adapter, true)
+    val enforcer = Enforcer(model, adapter, true)
+
+    return enforcer
 }
 
 private fun getAdapter(): Adapter {

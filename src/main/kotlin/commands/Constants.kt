@@ -127,3 +127,16 @@ fun getDomains(): List<String> {
         "domain5",
     )
 }
+
+fun getResources(): List<String> {
+    return listOf(
+        "course1", "course2", "course3", "course4", "course5", "course6", "course7", "course8", "course9", "course10",
+        "exam1", "exam2", "exam3", "exam4", "exam5", "exam6", "exam7", "exam8", "exam9", "exam10",
+        "lab1", "lab2", "lab3", "lab4", "lab5", "lab6", "lab7", "lab8", "lab9", "lab10",
+        "quiz1", "quiz2", "quiz3", "quiz4", "quiz5", "quiz6", "quiz7", "quiz8", "quiz9", "quiz10",
+        "course11", "course12", "course13", "course14", "course15", "course16", "course17", "course18", "course19", "course20",
+        "exam11", "exam12", "exam13", "exam14", "exam15", "exam16", "exam17", "exam18", "exam19", "exam20",
+        "lab11", "lab12", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab19", "lab20",
+        "quiz11", "quiz12", "quiz13", "quiz14", "quiz15", "quiz16", "quiz17", "quiz18", "quiz19", "quiz20",
+    )
+}
