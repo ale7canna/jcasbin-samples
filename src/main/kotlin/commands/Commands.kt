@@ -73,7 +73,7 @@ fun dbSetupLarge(args: List<String>) {
             resources.shuffled().first()[0],
             actions.shuffled().first()
         )
-    }.take(10000).toList()
+    }.take(100000).toList()
     enforcer.addNamedGroupingPolicies(
         "g", userRoles
     )
@@ -93,7 +93,7 @@ fun benchmark(args: List<String>) {
     val names = getNames()
     val actions = listOf("read", "edit", "consume", "share")
     val objects = getResources()
-    val domains = listOf("domain1", "domain2")
+    val domains = getDomains()
     val nPolicies = if (args.size == 1) args[0].toInt() else 100
     val timeInMillis = measureTimeMillis {
         for (k in 0..nPolicies) {
