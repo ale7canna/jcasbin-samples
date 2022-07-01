@@ -2,6 +2,7 @@ x-base-services:
   x-base-casbin-run: &x-base-casbin-run
     build:
       context: .
+      target: kotlin
     environment: &x-base-env
       DB_PORT: 5432
       DB_HOST: postgres-db
@@ -27,7 +28,7 @@ services:
     ports:
       - 27017:27017
 
-  casbin-run-mongo:
+  kotlin-mongo:
     <<: *x-base-casbin-run
     environment:
       <<: *x-base-env
@@ -35,10 +36,20 @@ services:
     depends_on:
       - mongo-db
 
-  casbin-run-postgres:
+  kotlin-postgres:
     <<: *x-base-casbin-run
     environment:
       <<: *x-base-env
       DB_TYPE: postgres
     depends_on:
       - postgres-db
+
+  go-postgres:
+    <<: *x-base-casbin-run
+    build:
+      context: .
+      target: go
+    depends_on:
+      - postgres-db
+#    command: casbin-sample check-policy ale domain1 course1 read
+    command: casbin-sample benchmark
