@@ -1,27 +1,28 @@
-package commands
+package utils
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/apex/log"
 	"github.com/casbin/casbin/v2"
-	model2 "github.com/casbin/casbin/v2/model"
-	"github.com/casbin/casbin/v2/persist"
-	gormadapter "github.com/casbin/gorm-adapter/v3"
 	"github.com/spf13/cobra"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"golang/cmd/utils"
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type CommandsManager struct {
-	Enforcer *casbin.Enforcer
+	Enforcer *casbin.CachedEnforcer
 }
 
 func NewManager() CommandsManager {
-	enforcer, err := getEnforcer()
+	start := time.Now().UnixMilli()
+	enforcer, err := utils.GetEnforcer()
+	log.WithField("timeSpent", time.Now().UnixMilli()-start).Info("enforcer init took {timeSpent}")
+
 	if err != nil {
 		panic(err)
 	}
@@ -69,6 +70,19 @@ func (m CommandsManager) Benchmark() *cobra.Command {
 	return cmd
 }
 
+func (m CommandsManager) Interactive() *cobra.Command {
+	run := func(cmd *cobra.Command, args []string) error {
+		m.interactive(args)
+		return nil
+	}
+
+	cmd := &cobra.Command{
+		Use:  "interactive",
+		RunE: run,
+	}
+	return cmd
+}
+
 func (m CommandsManager) setupDB() {
 	enforcer := m.Enforcer
 
@@ -108,7 +122,7 @@ func (m CommandsManager) checkPolicy(policy []string) {
 	domain := policy[1]
 	obj := policy[2]
 	action := policy[3]
-	sub := CustomSubject{Name: subject, IsAdmin: true} // the user that wants to access a resource.
+	sub := CustomSubject{Name: subject, IsAdmin: false} // the user that wants to access a resource.
 	result, err := enforcer.Enforce(sub, domain, obj, action)
 	if err != nil {
 		log.WithError(err).Fatal("Error")
@@ -118,9 +132,7 @@ func (m CommandsManager) checkPolicy(policy []string) {
 }
 
 func (m CommandsManager) benchmark(args []string) {
-	start := time.Now().UnixMilli()
 	enforcer := m.Enforcer
-	log.WithField("timeSpent", time.Now().UnixMilli()-start).Info("enforcer init took {timeSpent}")
 
 	names := []string{"ale", "alice", "bob"}
 	actions := []string{"read", "write"}
@@ -131,17 +143,16 @@ func (m CommandsManager) benchmark(args []string) {
 		nPolicies, _ = strconv.Atoi(args[0])
 	}
 
-	start = time.Now().UnixMilli()
+	start := time.Now().UnixMilli()
 	rand.Seed(time.Now().UnixNano())
 	for i := 1; i <= nPolicies; i++ {
-		name := randomItem(names)
-		domain := randomItem(domains)
-		obj := randomItem(objects)
-		act := randomItem(actions)
+		name := utils.RandomItem(names)
+		domain := utils.RandomItem(domains)
+		obj := utils.RandomItem(objects)
+		act := utils.RandomItem(actions)
 		isAdmin := false
 		sub := CustomSubject{Name: name, IsAdmin: isAdmin}
-
-		_, err := enforcer.Enforce(sub, domain, obj, act)
+		_, err := enforcer.Enforce(&sub, domain, obj, act)
 		if err != nil {
 			log.WithError(err).Fatal("Error")
 		}
@@ -151,59 +162,26 @@ func (m CommandsManager) benchmark(args []string) {
 		Info("Computing {nPolicies} policies took {timeSpent} ms")
 }
 
-func getEnforcer() (*casbin.Enforcer, error) {
-	modelTest := "[request_definition]\n" +
-		"r = sub, dom, obj, act\n" +
-		"[policy_definition]\n" +
-		"p = sub, dom, obj, act\n" +
-		"[role_definition]\n" +
-		"g = _, _, _\n" +
-		"g2 = _, _\n" +
-		"[policy_effect]\n" +
-		"e = some(where (p.eft == allow))\n" +
-		"[matchers]\n" +
-		"m = r.sub.IsAdmin == true || (g(r.sub.Name, p.sub, r.dom) && g2(r.obj, p.obj) && keyMatch(r.dom, p.dom) && keyMatch(r.act, p.act))"
-	model, err := model2.NewModelFromString(modelTest)
-	if err != nil {
-		log.WithError(err).Fatal("Fatal error")
+func (m CommandsManager) interactive(args []string) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter command: ")
+	input, _ := reader.ReadString('\n')
+	for input != "exit" {
+		i := strings.Split(strings.TrimSuffix(input, "\n"), " ")
+		command := i[0]
+		args = i[1:]
+
+		switch command {
+		case "check":
+			m.checkPolicy(args)
+		case "setup-db":
+			m.setupDB()
+		case "benchmark":
+			m.benchmark(args)
+		default:
+			break
+		}
+		fmt.Print("Enter command: ")
+		input, _ = reader.ReadString('\n')
 	}
-
-	a, err := getAdapter()
-	if err != nil {
-		log.WithError(err).Fatal("Fatal error")
-	}
-
-	enforcer, err := casbin.NewEnforcer(model, a)
-	if err != nil {
-		log.WithError(err).Fatal("Fatal error")
-	}
-	return enforcer, err
-}
-
-func getAdapter() (persist.Adapter, error) {
-	dbName := "jcasbin-sample"
-	dbHost := envOrDefault("DB_HOST", "localhost")
-	dbPort := envOrDefault("DB_PORT", "6543")
-	dbUser := envOrDefault("DB_USER", "db-user")
-	dbPassword := envOrDefault("DB_PASSWORD", "db-password")
-
-	connectionString := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s",
-		dbHost, dbPort, dbUser, dbName, dbPassword,
-	)
-
-	url := connectionString
-	db, _ := gorm.Open(postgres.Open(url), &gorm.Config{})
-	return gormadapter.NewAdapterByDB(db)
-}
-
-func envOrDefault(name string, def string) string {
-	val := os.Getenv(name)
-	if val == "" {
-		val = def
-	}
-	return val
-}
-
-func randomItem(items []string) string {
-	return items[rand.Intn(len(items))]
 }

@@ -21,6 +21,7 @@ func main() {
 	rootCmd.AddCommand(commandsManager.SetupDB())
 	rootCmd.AddCommand(commandsManager.CheckPolicy())
 	rootCmd.AddCommand(commandsManager.Benchmark())
+	rootCmd.AddCommand(commandsManager.Interactive())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
