@@ -39,7 +39,6 @@ func GetEnforcer() (*casbin.CachedEnforcer, error) {
 	if err != nil {
 		log.WithError(err).Fatal("Fatal error")
 	}
-	enforcer.EnableAutoSave(false)
 	return enforcer, err
 }
 

@@ -5,6 +5,6 @@ type CustomSubject struct {
 	IsAdmin bool
 }
 
-func (cs *CustomSubject) GetCacheKey() string {
+func (cs CustomSubject) GetCacheKey() string {
 	return cs.Name
 }

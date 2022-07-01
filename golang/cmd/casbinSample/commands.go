@@ -152,7 +152,7 @@ func (m CommandsManager) benchmark(args []string) {
 		act := utils.RandomItem(actions)
 		isAdmin := false
 		sub := CustomSubject{Name: name, IsAdmin: isAdmin}
-		_, err := enforcer.Enforce(&sub, domain, obj, act)
+		_, err := enforcer.Enforce(sub, domain, obj, act)
 		if err != nil {
 			log.WithError(err).Fatal("Error")
 		}

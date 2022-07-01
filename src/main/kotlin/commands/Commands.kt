@@ -52,7 +52,7 @@ fun dbSetupLarge(args: List<String>) {
                 roles.shuffled().first(),
                 domains.shuffled().first()
             )
-        }.take(100000).toList()
+        }.take(1000).toList()
     val types = listOf("course", "exam", "quiz", "lab")
     val genType = {
         val t = types.shuffled().first()
@@ -73,7 +73,7 @@ fun dbSetupLarge(args: List<String>) {
             resources.shuffled().first()[0],
             actions.shuffled().first()
         )
-    }.take(100000).toList()
+    }.take(1000).toList()
     enforcer.addNamedGroupingPolicies(
         "g", userRoles
     )

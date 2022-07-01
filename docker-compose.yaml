@@ -36,6 +36,15 @@ services:
     depends_on:
       - mongo-db
 
+  setup-large:
+    <<: *x-base-casbin-run
+    environment:
+      <<: *x-base-env
+      DB_TYPE: postgres
+    depends_on:
+      - postgres-db
+    command: bash -c "java -jar run.jar db-setup-large"
+
   kotlin-postgres:
     <<: *x-base-casbin-run
     environment:
@@ -43,6 +52,7 @@ services:
       DB_TYPE: postgres
     depends_on:
       - postgres-db
+    command: bash -c "java -jar run.jar benchmark 1000"
 
   go-postgres:
     <<: *x-base-casbin-run
@@ -52,4 +62,4 @@ services:
     depends_on:
       - postgres-db
 #    command: casbin-sample check-policy ale domain1 course1 read
-    command: casbin-sample benchmark
+    command: casbin-sample benchmark 1000
