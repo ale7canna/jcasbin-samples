@@ -17,10 +17,17 @@ import (
 )
 
 type CommandsManager struct {
+	Enforcer *casbin.Enforcer
 }
 
 func NewManager() CommandsManager {
-	return CommandsManager{}
+	enforcer, err := getEnforcer()
+	if err != nil {
+		panic(err)
+	}
+	return CommandsManager{
+		Enforcer: enforcer,
+	}
 }
 
 func (m CommandsManager) SetupDB() *cobra.Command {
@@ -63,7 +70,7 @@ func (m CommandsManager) Benchmark() *cobra.Command {
 }
 
 func (m CommandsManager) setupDB() {
-	enforcer, _ := m.getEnforcer()
+	enforcer := m.Enforcer
 
 	userRoles := [][]string{
 		{"alice", "admin", "domain1"},
@@ -95,7 +102,7 @@ func (m CommandsManager) setupDB() {
 }
 
 func (m CommandsManager) checkPolicy(policy []string) {
-	enforcer, _ := m.getEnforcer()
+	enforcer := m.Enforcer
 
 	subject := policy[0]
 	domain := policy[1]
@@ -112,7 +119,7 @@ func (m CommandsManager) checkPolicy(policy []string) {
 
 func (m CommandsManager) benchmark(args []string) {
 	start := time.Now().UnixMilli()
-	enforcer, _ := m.getEnforcer()
+	enforcer := m.Enforcer
 	log.WithField("timeSpent", time.Now().UnixMilli()-start).Info("enforcer init took {timeSpent}")
 
 	names := []string{"ale", "alice", "bob"}
@@ -144,7 +151,7 @@ func (m CommandsManager) benchmark(args []string) {
 		Info("Computing {nPolicies} policies took {timeSpent} ms")
 }
 
-func (m CommandsManager) getEnforcer() (*casbin.Enforcer, error) {
+func getEnforcer() (*casbin.Enforcer, error) {
 	modelTest := "[request_definition]\n" +
 		"r = sub, dom, obj, act\n" +
 		"[policy_definition]\n" +
@@ -161,7 +168,7 @@ func (m CommandsManager) getEnforcer() (*casbin.Enforcer, error) {
 		log.WithError(err).Fatal("Fatal error")
 	}
 
-	a, err := m.getAdapter()
+	a, err := getAdapter()
 	if err != nil {
 		log.WithError(err).Fatal("Fatal error")
 	}
@@ -173,7 +180,7 @@ func (m CommandsManager) getEnforcer() (*casbin.Enforcer, error) {
 	return enforcer, err
 }
 
-func (m CommandsManager) getAdapter() (persist.Adapter, error) {
+func getAdapter() (persist.Adapter, error) {
 	dbName := "jcasbin-sample"
 	dbHost := envOrDefault("DB_HOST", "localhost")
 	dbPort := envOrDefault("DB_PORT", "6543")
