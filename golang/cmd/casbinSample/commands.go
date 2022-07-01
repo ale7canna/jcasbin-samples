@@ -134,10 +134,10 @@ func (m CommandsManager) checkPolicy(policy []string) {
 func (m CommandsManager) benchmark(args []string) {
 	enforcer := m.Enforcer
 
-	names := []string{"ale", "alice", "bob"}
-	actions := []string{"read", "write"}
-	objects := []string{"course1", "course2", "data1", "data2", "course", "exam", "exam1", "exam2", "content"}
-	domains := []string{"domain1", "domain2"}
+	names := utils.GetNames()
+	actions := []string{"read", "edit", "consume", "share"}
+	objects := utils.GetResources()
+	domains := utils.GetDomains()
 	nPolicies := 100
 	if len(args) > 0 {
 		nPolicies, _ = strconv.Atoi(args[0])
