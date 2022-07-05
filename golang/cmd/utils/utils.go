@@ -40,7 +40,6 @@ func GetEnforcer() (*casbin.CachedEnforcer, error) {
 	watcher, err := rediswatcher.NewWatcher(redisHost, rediswatcher.WatcherOptions{
 		Channel: "/casbin",
 	})
-	watcher.SetUpdateCallback(watcherCallback)
 	if err != nil {
 		log.WithError(err).Fatal("Fatal error")
 	}
@@ -49,14 +48,24 @@ func GetEnforcer() (*casbin.CachedEnforcer, error) {
 		log.WithError(err).Fatal("Fatal error")
 	}
 	err = enforcer.SetWatcher(watcher)
+	err = watcher.SetUpdateCallback(watcherCallback(enforcer))
+	if err != nil {
+		log.WithError(err).Fatal("Fatal error")
+	}
 	if err != nil {
 		log.WithError(err).Fatal("Fatal error")
 	}
 	return enforcer, err
 }
 
-func watcherCallback(s string) {
-	log.WithField("cb", s).Info("Callback received")
+func watcherCallback(enforcer *casbin.CachedEnforcer) func(string) {
+	return func(s string) {
+		log.WithField("cb", s).Info("Callback received")
+		err := enforcer.LoadPolicy()
+		if err != nil {
+			log.WithError(err).Fatal("Fatal error")
+		}
+	}
 }
 
 func GetAdapter() (persist.Adapter, error) {

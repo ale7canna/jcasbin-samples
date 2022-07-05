@@ -178,10 +178,27 @@ func (m CommandsManager) interactive(args []string) {
 			m.setupDB()
 		case "benchmark":
 			m.benchmark(args)
+		case "add-policy":
+			m.addPolicy(args)
 		default:
 			break
 		}
 		fmt.Print("Enter command: ")
 		input, _ = reader.ReadString('\n')
 	}
+}
+
+func (m CommandsManager) addPolicy(policy []string) {
+	enforcer := m.Enforcer
+
+	subject := policy[0]
+	domain := policy[1]
+	obj := policy[2]
+	action := policy[3]
+	result, err := enforcer.AddPolicy(subject, domain, obj, action)
+	if err != nil {
+		log.WithError(err).Fatal("Error")
+	}
+	log.WithField("policy", policy).WithField("result", result).
+		Info("Policy {policy} added. Result: {result}")
 }
