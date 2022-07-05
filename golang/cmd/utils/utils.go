@@ -7,6 +7,7 @@ import (
 	model2 "github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
 	"github.com/casbin/gorm-adapter/v3"
+	rediswatcher "github.com/casbin/redis-watcher/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"math/rand"
@@ -35,11 +36,27 @@ func GetEnforcer() (*casbin.CachedEnforcer, error) {
 		log.WithError(err).Fatal("Fatal error")
 	}
 
+	redisHost := "redis:6379"
+	watcher, err := rediswatcher.NewWatcher(redisHost, rediswatcher.WatcherOptions{
+		Channel: "/casbin",
+	})
+	watcher.SetUpdateCallback(watcherCallback)
+	if err != nil {
+		log.WithError(err).Fatal("Fatal error")
+	}
 	enforcer, err := casbin.NewCachedEnforcer(model, a)
 	if err != nil {
 		log.WithError(err).Fatal("Fatal error")
 	}
+	err = enforcer.SetWatcher(watcher)
+	if err != nil {
+		log.WithError(err).Fatal("Fatal error")
+	}
 	return enforcer, err
+}
+
+func watcherCallback(s string) {
+	log.WithField("cb", s).Info("Callback received")
 }
 
 func GetAdapter() (persist.Adapter, error) {
