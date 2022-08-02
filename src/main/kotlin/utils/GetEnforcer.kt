@@ -9,14 +9,17 @@ import org.casbin.jcasbin.main.Enforcer
 import org.casbin.jcasbin.persist.Adapter
 import org.jim.jcasbin.MongoAdapter
 
+var _enforcer: Enforcer? = null
+
 fun getEnforcer(): Enforcer {
-    val adapter = getAdapter()
+    if (_enforcer == null) {
+        val adapter = getAdapter()
 
-    val modelText = object {}.javaClass.getResource("/model.conf")?.readText()
-    val model = newModel(modelText)
-    val enforcer = Enforcer(model, adapter, true)
-
-    return enforcer
+        val modelText = object {}.javaClass.getResource("/model.conf")?.readText()
+        val model = newModel(modelText)
+        _enforcer = Enforcer(model, adapter, true)
+    }
+    return _enforcer as Enforcer
 }
 
 private fun getAdapter(): Adapter {
