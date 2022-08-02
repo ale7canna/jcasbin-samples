@@ -15,19 +15,22 @@ import (
 )
 
 type CommandsManager struct {
-	Enforcer *casbin.CachedEnforcer
+	Enforcer func() *casbin.CachedEnforcer
 }
 
 func NewManager() CommandsManager {
 	start := time.Now().UnixMilli()
-	enforcer, err := utils.GetEnforcer()
+	enforcerFactory := func() *casbin.CachedEnforcer {
+		enforcer, err := utils.GetEnforcer()
+		if err != nil {
+			panic(err)
+		}
+		return enforcer
+	}
 	log.WithField("timeSpent", time.Now().UnixMilli()-start).Info("enforcer init took {timeSpent}")
 
-	if err != nil {
-		panic(err)
-	}
 	return CommandsManager{
-		Enforcer: enforcer,
+		Enforcer: enforcerFactory,
 	}
 }
 
@@ -84,7 +87,7 @@ func (m CommandsManager) Interactive() *cobra.Command {
 }
 
 func (m CommandsManager) setupDB() {
-	enforcer := m.Enforcer
+	enforcer := m.Enforcer()
 
 	userRoles := [][]string{
 		{"alice", "admin", "domain1"},
@@ -116,7 +119,7 @@ func (m CommandsManager) setupDB() {
 }
 
 func (m CommandsManager) checkPolicy(policy []string) {
-	enforcer := m.Enforcer
+	enforcer := m.Enforcer()
 
 	subject := policy[0]
 	domain := policy[1]
@@ -132,7 +135,7 @@ func (m CommandsManager) checkPolicy(policy []string) {
 }
 
 func (m CommandsManager) benchmark(args []string) {
-	enforcer := m.Enforcer
+	enforcer := m.Enforcer()
 
 	names := utils.GetNames()
 	actions := []string{"read", "edit", "consume", "share"}
@@ -189,7 +192,7 @@ func (m CommandsManager) interactive(args []string) {
 }
 
 func (m CommandsManager) addPolicy(policy []string) {
-	enforcer := m.Enforcer
+	enforcer := m.Enforcer()
 
 	subject := policy[0]
 	domain := policy[1]
