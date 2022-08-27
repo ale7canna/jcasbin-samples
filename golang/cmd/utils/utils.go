@@ -14,7 +14,7 @@ import (
 	"os"
 )
 
-func GetEnforcer() (*casbin.CachedEnforcer, error) {
+func GetEnforcer(withAdapter bool) (*casbin.CachedEnforcer, error) {
 	modelTest := "[request_definition]\n" +
 		"r = sub, dom, obj, act\n" +
 		"[policy_definition]\n" +
@@ -43,7 +43,12 @@ func GetEnforcer() (*casbin.CachedEnforcer, error) {
 	if err != nil {
 		log.WithError(err).Fatal("Fatal error")
 	}
-	enforcer, err := casbin.NewCachedEnforcer(model, a)
+	var enforcer *casbin.CachedEnforcer
+	if withAdapter == true {
+		enforcer, err = casbin.NewCachedEnforcer(model, a)
+	} else {
+		enforcer, err = casbin.NewCachedEnforcer(model)
+	}
 	if err != nil {
 		log.WithError(err).Fatal("Fatal error")
 	}

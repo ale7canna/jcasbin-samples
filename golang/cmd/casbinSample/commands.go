@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/apex/log"
 	"github.com/casbin/casbin/v2"
+	gormadapter "github.com/casbin/gorm-adapter/v3"
 	"github.com/spf13/cobra"
 	"golang/cmd/utils"
 	"math/rand"
@@ -21,7 +22,7 @@ type CommandsManager struct {
 func NewManager() CommandsManager {
 	start := time.Now().UnixMilli()
 	enforcerFactory := func() *casbin.CachedEnforcer {
-		enforcer, err := utils.GetEnforcer()
+		enforcer, err := utils.GetEnforcer(false)
 		if err != nil {
 			panic(err)
 		}
@@ -136,6 +137,8 @@ func (m CommandsManager) checkPolicy(policy []string) {
 
 func (m CommandsManager) benchmark(args []string) {
 	enforcer := m.Enforcer()
+	adapter, _ := utils.GetAdapter()
+	enforcer.SetAdapter(adapter)
 
 	names := utils.GetNames()
 	actions := []string{"read", "edit", "consume", "share"}
@@ -155,6 +158,16 @@ func (m CommandsManager) benchmark(args []string) {
 		act := utils.RandomItem(actions)
 		isAdmin := false
 		sub := CustomSubject{Name: name, IsAdmin: isAdmin}
+
+		filter := gormadapter.Filter{
+			Ptype: []string{"p"},
+			V0:    []string{name},
+		}
+		e := enforcer.LoadFilteredPolicy(filter)
+		if e != nil {
+			log.WithError(e).Fatal("Error")
+		}
+
 		_, err := enforcer.Enforce(sub, domain, obj, act)
 		if err != nil {
 			log.WithError(err).Fatal("Error")

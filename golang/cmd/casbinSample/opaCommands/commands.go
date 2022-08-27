@@ -196,7 +196,7 @@ resource_is_paywalled if {
 		// Handle result/decision.
 		// fmt.Printf("%+v", results) => [{Expressions:[true] Bindings:map[x:true]}]
 	}
-	log.WithField("timeSpent", time.Now().UnixMicro()-start).Info("Checking policy took {timeSpent} ms")
+	log.WithField("timeSpent", time.Now().UnixMicro()-start).Info("Checking policy took {timeSpent} us")
 }
 
 func NewManager() Manager {
