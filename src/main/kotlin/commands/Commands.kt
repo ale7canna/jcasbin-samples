@@ -1,12 +1,17 @@
 package commands
 
 import models.CustomSubject
+import org.casbin.adapter.JDBCAdapter
+import org.casbin.jcasbin.main.Enforcer
+import org.casbin.jcasbin.persist.file_adapter.FilteredAdapter
 import utils.getEnforcer
+import utils.getModel
+import utils.getPostgresAdapter
 import java.util.*
 import kotlin.system.measureTimeMillis
 
 fun dbSetup(args: List<String>) {
-    val enforcer = getEnforcer()
+    val enforcer = getEnforcer(null, null)
     enforcer.addNamedGroupingPolicies(
         "g", listOf(
             listOf("alice", "admin", "domain1"),
@@ -39,7 +44,7 @@ fun dbSetup(args: List<String>) {
 }
 
 fun dbSetupLarge(args: List<String>) {
-    val enforcer = getEnforcer()
+    val enforcer = getEnforcer(null, null)
     val names = getNames()
     val roles = getRoles()
     val domains = getDomains()
@@ -87,8 +92,11 @@ fun dbSetupLarge(args: List<String>) {
 
 fun benchmark(args: List<String>) {
     val start = System.currentTimeMillis()
-    val enforcer = getEnforcer()
+
+//    val enforcer = getEnforcer(null, null)
     println("enforcer init took ${System.currentTimeMillis() - start} ms")
+    val model = getModel()
+    val adapter = getPostgresAdapter() as JDBCAdapter
 
     val names = getNames()
     val actions = listOf("read", "edit", "consume", "share")
@@ -104,6 +112,15 @@ fun benchmark(args: List<String>) {
             val isAdmin = listOf(true, false).shuffled().first()
 
             val sub = CustomSubject(name = name, isAdmin = isAdmin) // the user that wants to access a resource.
+
+            val policyFilter = FilteredAdapter.Filter()
+            policyFilter.g = arrayOf("", "")
+            policyFilter.p = arrayOf(
+                name, "", "", ""
+            )
+            val enforcer = Enforcer(model)
+            enforcer.adapter = adapter
+            enforcer.loadFilteredPolicy(policyFilter)
             val result = enforcer.enforce(sub, domain, obj, act)
 //            println(result)
         }
@@ -117,7 +134,7 @@ fun checkPolicy(args: List<String>) {
         return
     }
 
-    val enforcer = getEnforcer()
+    val enforcer = getEnforcer(null, null)
     val subject = args[0]
     val domain = args[1]
     val obj = args[2]

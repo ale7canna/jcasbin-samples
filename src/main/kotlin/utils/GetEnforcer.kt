@@ -1,22 +1,24 @@
 package utils
 
-import com.mongodb.MongoClientSettings
-import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import org.casbin.adapter.JDBCAdapter
 import org.casbin.jcasbin.main.CoreEnforcer.newModel
 import org.casbin.jcasbin.main.Enforcer
+import org.casbin.jcasbin.model.Model
 import org.casbin.jcasbin.persist.Adapter
 import org.jim.jcasbin.MongoAdapter
 
-fun getEnforcer(): Enforcer {
-    val adapter = getAdapter()
+fun getEnforcer(casbinModel: Model?, filteredAdapter: Adapter?): Enforcer {
+    val adapter = filteredAdapter ?: getAdapter()
+    val model = casbinModel ?: getModel()
 
+    return Enforcer(model, adapter, true)
+}
+
+fun getModel(): Model? {
     val modelText = object {}.javaClass.getResource("/model.conf")?.readText()
     val model = newModel(modelText)
-    val enforcer = Enforcer(model, adapter, true)
-
-    return enforcer
+    return model
 }
 
 private fun getAdapter(): Adapter {
@@ -26,7 +28,7 @@ private fun getAdapter(): Adapter {
     return getMongoAdapter()
 }
 
-private fun getPostgresAdapter(): Adapter {
+fun getPostgresAdapter(): Adapter {
     val dbHost = System.getenv("DB_HOST") ?: "localhost"
     val dbPort = System.getenv("DB_PORT") ?: "6543"
     val dbDriver = "org.postgresql.Driver"
